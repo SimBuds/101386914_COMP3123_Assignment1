@@ -1,65 +1,64 @@
-const User = require('../models/User');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const validator = require('validator');
+const User = require('../models/User');  // Importing the User model
+const bcrypt = require('bcryptjs');  // Import bcrypt for password hashing
 
-exports.register = async (req, res) => {
-  try {
-    const { username, email, password } = req.body;
+const UserController = {
+  async register(req, res) {
+    try {
+      // Validate request data
+      if (!req.body.username || !req.body.email || !req.body.password) {
+        return res.status(400).send({ message: 'All fields are required' });
+      }
 
-    if (!username || !email || !password) {
-      return res.status(400).json({ error: 'All fields are required' });
+      // Check if a user with the same email or username already exists
+      const userExists = await User.findOne({ $or: [{ email: req.body.email }, { username: req.body.username }] });
+      if (userExists) {
+        return res.status(409).send({ message: 'User already exists' });
+      }
+
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(req.body.password, 10);
+
+      // Create a new user
+      const user = new User({
+        username: req.body.username,
+        email: req.body.email,
+        password: hashedPassword
+      });
+
+      // Save the new user to the database
+      await user.save();
+
+      res.status(201).send({ message: 'User registered successfully' });
+    } catch (error) {
+      res.status(500).send({ message: 'Server error', error: error.message });
     }
+  },
 
-    if (!validator.isEmail(email)) {
-      return res.status(400).json({ error: 'Invalid email format' });
+  // Method for handling user login
+  async login(req, res) {
+    try {
+      // Validate request data
+      if (!req.body.email || !req.body.password) {
+        return res.status(400).send({ message: 'Both email and password are required' });
+      }
+
+      // Find the user by email
+      const user = await User.findOne({ email: req.body.email });
+      if (!user) {
+        return res.status(404).send({ message: 'Sorry User not found' });
+      }
+
+      // Compare the provided password with the stored hash
+      const isMatch = await bcrypt.compare(req.body.password, user.password);
+      if (!isMatch) {
+        return res.status(401).send({ message: 'Incorrect password, please try again.' });
+      }
+
+      res.status(200).send({ message: 'Thank you login successful' });
+    } catch (error) {
+      res.status(500).send({ message: 'Server error please try again.', error: error.message });
     }
-
-    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
-    if (existingUser) {
-      return res.status(400).json({ error: 'User with this email or username already exists' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({
-      username,
-      email,
-      password: hashedPassword,
-    });
-
-    await user.save();
-    res.status(201).json({ message: 'User registered successfully', user });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
-exports.login = async (req, res) => {
-  try {
-    const { username, email, password } = req.body;
-
-    const user = await User.findOne({ $or: [{ username }, { email }] });
-    if (!user) {
-      return res.status(400).json({ error: 'User not found' });
-    }
-
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
-    if (!isPasswordCorrect) {
-      return res.status(400).json({ error: 'Invalid password' });
-    }
-
-    const token = jwt.sign({ userId: user._id }, 'YOUR_SECRET_KEY', { expiresIn: '1h' });
-    res.status(200).json({ message: 'Logged in successfully', token });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-};
-
-exports.getUsers = async (req, res) => {
-  try {
-    const users = await User.find();
-    res.status(200).json({ users });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-};
+module.exports = UserController;

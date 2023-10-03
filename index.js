@@ -18,8 +18,8 @@ mongoose.connect('mongodb://localhost/assignment-1', {
 app.use(bodyParser.json());
 
 // Setup Routes
-app.use('/users', userRoutes);
-app.use('/employees', employeeRoutes);
+app.use('/api/v1/user/', userRoutes);
+app.use('/api/v1/emp/employees', employeeRoutes);
 
 // Start the server
 const port = 3000;
