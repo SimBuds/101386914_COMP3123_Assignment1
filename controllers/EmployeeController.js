@@ -55,7 +55,7 @@ const EmployeeController = {
       if (!employee) {
         return res.status(404).send({ message: 'Sorry Employee was not found' });
       }
-      res.status(204).send();
+      res.sendStatus(204);
     } catch (error) {
       res.status(500).send({ message: 'Server error please try again.', error: error.message });
     }

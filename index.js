@@ -8,10 +8,10 @@ const employeeRoutes = require('./routes/employeeRoutes');
 // Setup express app
 const app = express();
 
-// Connect to MongoDB
-mongoose.connect('mongodb://localhost/assignment-1', {
+// Connect to MongoDB which is running locally
+mongoose.connect('mongodb://localhost:27017/AssignmentOneDB', {
   useNewUrlParser: true,
-  useUnifiedTopology: true,
+  useUnifiedTopology: true
 });
 
 // Middleware to parse the request body
