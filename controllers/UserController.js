@@ -1,5 +1,5 @@
-const User = require('../models/User');  // Importing the User model
-const bcrypt = require('bcryptjs');  // Import bcrypt for password hashing
+const User = require('../models/User');
+const bcrypt = require('bcryptjs');
 
 const UserController = {
   async register(req, res) {
